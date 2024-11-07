@@ -1,0 +1,101 @@
+class Job:
+    def _init_(self, job_id, deadline, profit):
+        self.job_id = job_id
+        self.deadline = deadline
+        self.profit = profit
+
+def greedy_job_scheduling(jobs, max_deadline):
+    """
+    Implements Job Scheduling using Greedy approach
+    Time Complexity: O(n log n)
+    """
+    # Sort jobs by profit in descending order
+    sorted_jobs = sorted(jobs, key=lambda x: x.profit, reverse=True)
+    
+    # Initialize result array and slot array
+    result = [None] * max_deadline
+    slot = [False] * max_deadline
+    
+    total_profit = 0
+    scheduled_jobs = []
+    
+    # Schedule jobs
+    for job in sorted_jobs:
+        # Find a free slot from deadline backwards
+        for j in range(min(max_deadline - 1, job.deadline - 1), -1, -1):
+            if not slot[j]:
+                result[j] = job
+                slot[j] = True
+                total_profit += job.profit
+                scheduled_jobs.append(job.job_id)
+                break
+    
+    return scheduled_jobs, total_profit
+
+def dynamic_job_scheduling(jobs):
+    """
+    Implements Job Scheduling using Dynamic Programming
+    Time Complexity: O(n^2)
+    """
+    # Sort jobs by deadline
+    sorted_jobs = sorted(jobs, key=lambda x: x.deadline)
+    n = len(jobs)
+    
+    # dp[i] stores the maximum profit for first i jobs
+    dp = [0] * (n + 1)
+    # selected_jobs[i] stores the jobs selected for optimal profit
+    selected_jobs = [[] for _ in range(n + 1)]
+    
+    for i in range(1, n + 1):
+        current_job = sorted_jobs[i-1]
+        
+        # Try including current job with all previous combinations
+        for j in range(i-1, -1, -1):
+            if j == 0 or sorted_jobs[j-1].deadline < current_job.deadline:
+                if dp[j] + current_job.profit > dp[i]:
+                    dp[i] = dp[j] + current_job.profit
+                    selected_jobs[i] = selected_jobs[j] + [current_job.job_id]
+    
+    # Find maximum profit and corresponding jobs
+    max_profit = max(dp)
+    scheduled_jobs = selected_jobs[dp.index(max_profit)]
+    
+    return scheduled_jobs, max_profit
+
+def print_schedule(jobs, scheduled_jobs, total_profit, algorithm_name):
+    """Helper function to print the schedule"""
+    print(f"\n{algorithm_name} Results:")
+    print(f"Scheduled Jobs: {scheduled_jobs}")
+    print(f"Total Profit: {total_profit}")
+    print("\nDetailed Schedule:")
+    print("Job ID\tDeadline\tProfit")
+    for job in jobs:
+        if job.job_id in scheduled_jobs:
+            print(f"{job.job_id}\t{job.deadline}\t\t{job.profit}")
+
+def main():
+    # Example jobs: (job_id, deadline, profit)
+    jobs_data = [
+        (1, 4, 20),
+        (2, 1, 10),
+        (3, 1, 40),
+        (4, 1, 30),
+        (5, 3, 30)
+    ]
+    
+    # Create Job objects
+    jobs = [Job(id, deadline, profit) for id, deadline, profit in jobs_data]
+    
+    # Find maximum deadline
+    max_deadline = max(job.deadline for job in jobs)
+    
+    # Run Greedy Algorithm
+    greedy_jobs, greedy_profit = greedy_job_scheduling(jobs, max_deadline)
+    print_schedule(jobs, greedy_jobs, greedy_profit, "Greedy Algorithm")
+    
+    # Run Dynamic Programming Algorithm
+    dp_jobs, dp_profit = dynamic_job_scheduling(jobs)
+    print_schedule(jobs, dp_jobs, dp_profit, "Dynamic Programming Algorithm")
+
+if _name_ == "_main_":
+    main()
